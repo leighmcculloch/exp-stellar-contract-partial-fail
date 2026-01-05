@@ -139,7 +139,7 @@ jobs:
         run: echo "tx-hash=$(stellar tx hash < tx-simulated.xdr)" >> "$GITHUB_OUTPUT"
 
       - name: Sign transaction
-        run: stellar tx sign < tx-simulated.xdr > tx-signed.xdr
+        run: stellar tx sign --sign-with-key invoker < tx-simulated.xdr > tx-signed.xdr
 
       - name: Send transaction
         run: stellar tx send < tx-signed.xdr
