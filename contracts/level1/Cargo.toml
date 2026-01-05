@@ -1,0 +1,18 @@
+[package]
+name = "level1"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["lib", "cdylib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = { workspace = true }
+level2-interface = { path = "../level2-interface" }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+level2 = { path = "../level2" }
+level3 = { path = "../level3" }

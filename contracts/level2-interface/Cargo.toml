@@ -1,5 +1,5 @@
 [package]
-name = "callee-interface"
+name = "level2-interface"
 version = "0.0.0"
 edition = "2021"
 publish = false

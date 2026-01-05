@@ -202,30 +202,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "callee"
-version = "0.0.0"
-dependencies = [
- "callee-interface",
- "soroban-sdk",
-]
-
-[[package]]
-name = "callee-interface"
-version = "0.0.0"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "caller"
-version = "0.0.0"
-dependencies = [
- "callee",
- "callee-interface",
- "soroban-sdk",
-]
-
-[[package]]
 name = "cc"
 version = "1.2.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -815,6 +791,47 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ecc2af9a1119c51f12a14607e783cb977bde58bc069ff0c3da1095e635d70654"
 dependencies = [
  "cpufeatures",
+]
+
+[[package]]
+name = "level1"
+version = "0.0.0"
+dependencies = [
+ "level2",
+ "level2-interface",
+ "level3",
+ "soroban-sdk",
+]
+
+[[package]]
+name = "level2"
+version = "0.0.0"
+dependencies = [
+ "level2-interface",
+ "level3",
+ "level3-interface",
+ "soroban-sdk",
+]
+
+[[package]]
+name = "level2-interface"
+version = "0.0.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "level3"
+version = "0.0.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "level3-interface"
+version = "0.0.0"
+dependencies = [
+ "soroban-sdk",
 ]
 
 [[package]]

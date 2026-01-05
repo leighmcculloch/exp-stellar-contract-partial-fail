@@ -1,5 +1,5 @@
 [package]
-name = "callee"
+name = "level3"
 version = "0.0.0"
 edition = "2021"
 publish = false
@@ -10,7 +10,6 @@ doctest = false
 
 [dependencies]
 soroban-sdk = { workspace = true }
-callee-interface = { path = "../callee-interface" }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }

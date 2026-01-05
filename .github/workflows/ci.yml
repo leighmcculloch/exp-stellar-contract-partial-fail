@@ -25,17 +25,23 @@ jobs:
       - name: Build contracts
         run: stellar contract build
 
-      - name: Upload callee WASM artifact
+      - name: Upload level1 WASM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: callee-wasm
-          path: target/wasm32v1-none/release/callee.wasm
+          name: level1-wasm
+          path: target/wasm32v1-none/release/level1.wasm
 
-      - name: Upload caller WASM artifact
+      - name: Upload level2 WASM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: caller-wasm
-          path: target/wasm32v1-none/release/caller.wasm
+          name: level2-wasm
+          path: target/wasm32v1-none/release/level2.wasm
+
+      - name: Upload level3 WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: level3-wasm
+          path: target/wasm32v1-none/release/level3.wasm
 
       - name: Attest WASM artifacts
         if: github.ref == 'refs/heads/main'
@@ -51,17 +57,17 @@ jobs:
       - name: Run tests
         run: cargo test
 
-  deploy-callee:
+  deploy-level1:
     needs: [build, test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     outputs:
       contract-id: ${{ steps.deploy.outputs.contract-id }}
     steps:
-      - name: Download callee WASM artifact
+      - name: Download level1 WASM artifact
         uses: actions/download-artifact@v4
         with:
-          name: callee-wasm
+          name: level1-wasm
 
       - name: Install Stellar CLI
         uses: stellar/stellar-cli@v23.4.0
@@ -72,23 +78,23 @@ jobs:
           stellar keys use deployer
           stellar network use testnet
 
-      - name: Deploy callee contract
+      - name: Deploy level1 contract
         id: deploy
         run: |
-          contract_id=$(stellar contract deploy --wasm callee.wasm)
+          contract_id=$(stellar contract deploy --wasm level1.wasm)
           echo "contract-id=$contract_id" >> "$GITHUB_OUTPUT"
 
-  deploy-caller:
+  deploy-level2:
     needs: [build, test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     outputs:
       contract-id: ${{ steps.deploy.outputs.contract-id }}
     steps:
-      - name: Download caller WASM artifact
+      - name: Download level2 WASM artifact
         uses: actions/download-artifact@v4
         with:
-          name: caller-wasm
+          name: level2-wasm
 
       - name: Install Stellar CLI
         uses: stellar/stellar-cli@v23.4.0
@@ -99,14 +105,41 @@ jobs:
           stellar keys use deployer
           stellar network use testnet
 
-      - name: Deploy caller contract
+      - name: Deploy level2 contract
         id: deploy
         run: |
-          contract_id=$(stellar contract deploy --wasm caller.wasm)
+          contract_id=$(stellar contract deploy --wasm level2.wasm)
+          echo "contract-id=$contract_id" >> "$GITHUB_OUTPUT"
+
+  deploy-level3:
+    needs: [build, test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      contract-id: ${{ steps.deploy.outputs.contract-id }}
+    steps:
+      - name: Download level3 WASM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: level3-wasm
+
+      - name: Install Stellar CLI
+        uses: stellar/stellar-cli@v23.4.0
+
+      - name: Configure Stellar CLI
+        run: |
+          stellar keys generate deployer --fund
+          stellar keys use deployer
+          stellar network use testnet
+
+      - name: Deploy level3 contract
+        id: deploy
+        run: |
+          contract_id=$(stellar contract deploy --wasm level3.wasm)
           echo "contract-id=$contract_id" >> "$GITHUB_OUTPUT"
 
   invoke:
-    needs: [deploy-callee, deploy-caller]
+    needs: [deploy-level1, deploy-level2, deploy-level3]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     outputs:
@@ -125,10 +158,11 @@ jobs:
         run: >
           stellar contract invoke
           --build-only
-          --id ${{ needs.deploy-caller.outputs.contract-id }}
+          --id ${{ needs.deploy-level1.outputs.contract-id }}
           --
           do_something
-          --contract ${{ needs.deploy-callee.outputs.contract-id }}
+          --level2 ${{ needs.deploy-level2.outputs.contract-id }}
+          --level3 ${{ needs.deploy-level3.outputs.contract-id }}
           > tx-build.xdr
 
       - name: Simulate transaction
