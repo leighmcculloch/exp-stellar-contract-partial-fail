@@ -94,9 +94,10 @@ jobs:
           stellar network use testnet
 
       - name: Invoke caller contract
-        run: |
-          stellar contract invoke \
-            --id ${{ needs.deploy.outputs.caller-contract-id }} \
-            -- \
-            do_something \
-            --contract ${{ needs.deploy.outputs.callee-contract-id }}
+        run: >
+          stellar contract invoke
+          --send yes
+          --id ${{ needs.deploy.outputs.caller-contract-id }}
+          --
+          do_something
+          --contract ${{ needs.deploy.outputs.callee-contract-id }}
