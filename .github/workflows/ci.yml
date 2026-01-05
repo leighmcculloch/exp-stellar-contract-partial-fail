@@ -109,6 +109,8 @@ jobs:
     needs: [deploy-callee, deploy-caller]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    outputs:
+      tx-hash: ${{ steps.invoke.outputs.tx-hash }}
     steps:
       - name: Install Stellar CLI
         uses: stellar/stellar-cli@v23.4.0
@@ -119,11 +121,49 @@ jobs:
           stellar keys use invoker
           stellar network use testnet
 
-      - name: Invoke caller contract
+      - name: Build invoke transaction
         run: >
           stellar contract invoke
-          --send yes
+          --build-only
           --id ${{ needs.deploy-caller.outputs.contract-id }}
           --
           do_something
           --contract ${{ needs.deploy-callee.outputs.contract-id }}
+          > tx-build.xdr
+
+      - name: Simulate transaction
+        run: stellar tx simulate < tx-build.xdr > tx-simulated.xdr
+
+      - name: Get transaction hash
+        id: invoke
+        run: echo "tx-hash=$(stellar tx hash < tx-simulated.xdr)" >> "$GITHUB_OUTPUT"
+
+      - name: Sign transaction
+        run: stellar tx sign < tx-simulated.xdr > tx-signed.xdr
+
+      - name: Send transaction
+        run: stellar tx send < tx-signed.xdr
+
+  fetch-meta:
+    needs: invoke
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Install Stellar CLI
+        uses: stellar/stellar-cli@v23.4.0
+
+      - name: Configure Stellar CLI
+        run: stellar network use testnet
+
+      - name: Fetch transaction meta
+        run: |
+          stellar tx fetch meta \
+            --hash ${{ needs.invoke.outputs.tx-hash }} \
+            --output json-formatted \
+            | tee tx-meta.json
+
+      - name: Upload transaction meta artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tx-meta
+          path: tx-meta.json
