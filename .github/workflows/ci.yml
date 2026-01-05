@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Stellar CLI
+        uses: stellar/stellar-cli@v23.4.0
+
+      - name: Build contracts
+        run: stellar contract build
+
+      - name: Upload WASM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm
+          path: target/wasm32v1-none/release/*.wasm
+
+      - name: Attest WASM artifacts
+        if: github.ref == 'refs/heads/main'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: target/wasm32v1-none/release/*.wasm
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests
+        run: cargo test
+
+  deploy:
+    needs: [build, test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download WASM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm
+
+      - name: Install Stellar CLI
+        uses: stellar/stellar-cli@v23.4.0
+
+      - name: Configure Stellar CLI
+        run: |
+          stellar keys generate deployer --fund
+          stellar keys use deployer
+          stellar network use testnet
+
+      - name: Deploy callee contract
+        run: stellar contract deploy --wasm callee.wasm
+
+      - name: Deploy caller contract
+        run: stellar contract deploy --wasm caller.wasm
