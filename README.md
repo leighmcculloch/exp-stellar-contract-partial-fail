@@ -75,3 +75,70 @@ pub fn do_something(env: Env, contract: Address) {
 ```
 
 By using `try_call_me()` instead of `call_me()`, the caller receives a `Result` and can handle the error without the transaction failing.
+
+## CI/CD Pipeline
+
+The project includes a GitHub Actions workflow that builds, tests, deploys, and invokes the contracts on Stellar testnet.
+
+### Pipeline Diagram
+
+```mermaid
+flowchart TD
+    subgraph Build & Test
+        build[build]
+        test[test]
+    end
+
+    subgraph Deploy
+        deploy-callee[deploy-callee]
+        deploy-caller[deploy-caller]
+    end
+
+    subgraph Invoke
+        invoke[invoke]
+    end
+
+    build --> deploy-callee
+    build --> deploy-caller
+    test --> deploy-callee
+    test --> deploy-caller
+    deploy-callee --> invoke
+    deploy-caller --> invoke
+```
+
+### Pipeline Jobs
+
+| Job | Description |
+|-----|-------------|
+| **build** | Builds contracts with `stellar contract build`, uploads WASM artifacts, and attests them on main branch |
+| **test** | Runs `cargo test` to execute unit tests |
+| **deploy-callee** | Deploys the callee contract to testnet, outputs contract ID |
+| **deploy-caller** | Deploys the caller contract to testnet, outputs contract ID |
+| **invoke** | Invokes the caller contract's `do_something` function, passing the callee contract ID |
+
+The build and test jobs run in parallel. The two deploy jobs also run in parallel after build and test complete. Finally, the invoke job runs after both contracts are deployed.
+
+### Example Output
+
+From a recent CI run, here are the deployed contracts on testnet:
+
+- **callee**: [`CC6JHKAQ5BFKOZRHHYTBG24PJRG6XBGPOVEBPUWDYRYUGAJU2F6B7OB6`](https://stellar.expert/explorer/testnet/contract/CC6JHKAQ5BFKOZRHHYTBG24PJRG6XBGPOVEBPUWDYRYUGAJU2F6B7OB6)
+- **caller**: [`CBDPHZNEOPE2L32PK72NEZS4JSSQJ2UDQV2LWID7XA7TSXRVO4MR5YCJ`](https://stellar.expert/explorer/testnet/contract/CBDPHZNEOPE2L32PK72NEZS4JSSQJ2UDQV2LWID7XA7TSXRVO4MR5YCJ)
+```
+
+#### Invoke Output
+
+The invoke job calls the caller contract, which in turn calls the callee contract using `try_call_me()`:
+
+```
+stellar contract invoke \
+  --send yes \
+  --id CBDPHZNEOPE2L32PK72NEZS4JSSQJ2UDQV2LWID7XA7TSXRVO4MR5YCJ \
+  -- \
+  do_something \
+  --contract CC6JHKAQ5BFKOZRHHYTBG24PJRG6XBGPOVEBPUWDYRYUGAJU2F6B7OB6
+```
+
+The transaction succeeds even though the callee contract fails, because the caller uses `try_call_me()` to catch the error gracefully.
+
+Example invoke transaction: [`38d69089a10eba0eb5e20c3867d16ea775090b03261b93c56c051e714ec7bd86`](https://stellar.expert/explorer/testnet/tx/38d69089a10eba0eb5e20c3867d16ea775090b03261b93c56c051e714ec7bd86)
