@@ -25,11 +25,17 @@ jobs:
       - name: Build contracts
         run: stellar contract build
 
-      - name: Upload WASM artifacts
+      - name: Upload callee WASM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wasm
-          path: target/wasm32v1-none/release/*.wasm
+          name: callee-wasm
+          path: target/wasm32v1-none/release/callee.wasm
+
+      - name: Upload caller WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: caller-wasm
+          path: target/wasm32v1-none/release/caller.wasm
 
       - name: Attest WASM artifacts
         if: github.ref == 'refs/heads/main'
@@ -45,18 +51,17 @@ jobs:
       - name: Run tests
         run: cargo test
 
-  deploy:
+  deploy-callee:
     needs: [build, test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     outputs:
-      callee-contract-id: ${{ steps.deploy-callee.outputs.contract-id }}
-      caller-contract-id: ${{ steps.deploy-caller.outputs.contract-id }}
+      contract-id: ${{ steps.deploy.outputs.contract-id }}
     steps:
-      - name: Download WASM artifacts
+      - name: Download callee WASM artifact
         uses: actions/download-artifact@v4
         with:
-          name: wasm
+          name: callee-wasm
 
       - name: Install Stellar CLI
         uses: stellar/stellar-cli@v23.4.0
@@ -68,19 +73,40 @@ jobs:
           stellar network use testnet
 
       - name: Deploy callee contract
-        id: deploy-callee
+        id: deploy
         run: |
           contract_id=$(stellar contract deploy --wasm callee.wasm)
           echo "contract-id=$contract_id" >> "$GITHUB_OUTPUT"
 
+  deploy-caller:
+    needs: [build, test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      contract-id: ${{ steps.deploy.outputs.contract-id }}
+    steps:
+      - name: Download caller WASM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: caller-wasm
+
+      - name: Install Stellar CLI
+        uses: stellar/stellar-cli@v23.4.0
+
+      - name: Configure Stellar CLI
+        run: |
+          stellar keys generate deployer --fund
+          stellar keys use deployer
+          stellar network use testnet
+
       - name: Deploy caller contract
-        id: deploy-caller
+        id: deploy
         run: |
           contract_id=$(stellar contract deploy --wasm caller.wasm)
           echo "contract-id=$contract_id" >> "$GITHUB_OUTPUT"
 
   invoke:
-    needs: deploy
+    needs: [deploy-callee, deploy-caller]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -97,7 +123,7 @@ jobs:
         run: >
           stellar contract invoke
           --send yes
-          --id ${{ needs.deploy.outputs.caller-contract-id }}
+          --id ${{ needs.deploy-caller.outputs.contract-id }}
           --
           do_something
-          --contract ${{ needs.deploy.outputs.callee-contract-id }}
+          --contract ${{ needs.deploy-callee.outputs.contract-id }}
