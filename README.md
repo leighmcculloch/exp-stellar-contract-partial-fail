@@ -124,7 +124,6 @@ From a recent CI run, here are the deployed contracts on testnet:
 
 - **callee**: [`CC6JHKAQ5BFKOZRHHYTBG24PJRG6XBGPOVEBPUWDYRYUGAJU2F6B7OB6`](https://stellar.expert/explorer/testnet/contract/CC6JHKAQ5BFKOZRHHYTBG24PJRG6XBGPOVEBPUWDYRYUGAJU2F6B7OB6)
 - **caller**: [`CBDPHZNEOPE2L32PK72NEZS4JSSQJ2UDQV2LWID7XA7TSXRVO4MR5YCJ`](https://stellar.expert/explorer/testnet/contract/CBDPHZNEOPE2L32PK72NEZS4JSSQJ2UDQV2LWID7XA7TSXRVO4MR5YCJ)
-```
 
 #### Invoke Output
 
