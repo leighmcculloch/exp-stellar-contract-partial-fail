@@ -4,7 +4,7 @@ use super::*;
 use soroban_sdk::Env;
 
 #[test]
-fn test_do_something_succeeds() {
+fn test_level1_succeeds() {
     let env = Env::default();
 
     // Register level3 contract (innermost, succeeds)
@@ -18,5 +18,5 @@ fn test_do_something_succeeds() {
     let client = ContractClient::new(&env, &level1_contract_id);
 
     // This should succeed even though level2 fails
-    client.do_something(&level2_contract_id, &level3_contract_id);
+    client.level1(&level2_contract_id, &level3_contract_id);
 }

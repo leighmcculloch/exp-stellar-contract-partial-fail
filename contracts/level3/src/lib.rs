@@ -11,8 +11,8 @@ pub struct Contract;
 
 #[contractimpl]
 impl Contract {
-    pub fn do_work(env: Env) {
-        log!(&env, "level3: doing work");
+    pub fn level3(env: Env) {
+        log!(&env, "level3");
         WorkDone { success: true }.publish(&env);
     }
 }

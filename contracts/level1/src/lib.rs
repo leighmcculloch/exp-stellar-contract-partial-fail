@@ -6,9 +6,9 @@ pub struct Contract;
 
 #[contractimpl]
 impl Contract {
-    pub fn do_something(env: Env, level2: Address, level3: Address) {
+    pub fn level1(env: Env, level2: Address, level3: Address) {
         let client = level2_interface::Client::new(&env, &level2);
-        match client.try_call_me(&level3) {
+        match client.try_level2(&level3) {
             Ok(_) => log!(&env, "level2 succeeded"),
             Err(_) => log!(&env, "level2 failed"),
         }

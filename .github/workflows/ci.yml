@@ -160,7 +160,7 @@ jobs:
           --build-only
           --id ${{ needs.deploy-level1.outputs.contract-id }}
           --
-          do_something
+          level1
           --level2 ${{ needs.deploy-level2.outputs.contract-id }}
           --level3 ${{ needs.deploy-level3.outputs.contract-id }}
           > tx-build.xdr

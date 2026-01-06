@@ -10,5 +10,5 @@ pub enum Error {
 
 #[contractclient(name = "Client")]
 pub trait Interface {
-    fn call_me(env: Env, level3: Address) -> Result<(), Error>;
+    fn level2(env: Env, level3: Address) -> Result<(), Error>;
 }

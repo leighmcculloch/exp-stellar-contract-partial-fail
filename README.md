@@ -65,6 +65,12 @@ cargo test
 
 ## How It Works
 
+Each contract has a function named after its level:
+
+- `level3()` - Succeeds and publishes a `WorkDone` event
+- `level2(level3)` - Calls `level3()`, then fails with `Error::AlwaysFails`
+- `level1(level2, level3)` - Calls `try_level2()` to catch the error gracefully
+
 The `level2-interface` crate defines the contract interface separately from the implementation:
 
 ```rust
@@ -75,23 +81,23 @@ pub enum Error {
 
 #[contractclient(name = "Client")]
 pub trait Interface {
-    fn call_me(env: Env, level3: Address) -> Result<(), Error>;
+    fn level2(env: Env, level3: Address) -> Result<(), Error>;
 }
 ```
 
 The `level1` contract uses the interface to call level2:
 
 ```rust
-pub fn do_something(env: Env, level2: Address, level3: Address) {
+pub fn level1(env: Env, level2: Address, level3: Address) {
     let client = level2_interface::Client::new(&env, &level2);
-    match client.try_call_me(&level3) {
+    match client.try_level2(&level3) {
         Ok(_) => log!(&env, "level2 succeeded"),
         Err(_) => log!(&env, "level2 failed"),
     }
 }
 ```
 
-By using `try_call_me()` instead of `call_me()`, level1 receives a `Result` and can handle the error without the transaction failing.
+By using `try_level2()` instead of `level2()`, level1 receives a `Result` and can handle the error without the transaction failing.
 
 ## CI/CD Pipeline
 
@@ -141,7 +147,7 @@ flowchart TD
 | **deploy-level1** | Deploys the level1 contract to testnet, outputs contract ID |
 | **deploy-level2** | Deploys the level2 contract to testnet, outputs contract ID |
 | **deploy-level3** | Deploys the level3 contract to testnet, outputs contract ID |
-| **invoke** | Invokes level1's `do_something` function, passing level2 and level3 contract IDs |
+| **invoke** | Invokes level1's `level1` function, passing level2 and level3 contract IDs |
 | **fetch-meta** | Fetches the transaction meta from the invoke transaction |
 
 The build and test jobs run in parallel. The three deploy jobs also run in parallel after build and test complete. The invoke job runs after all contracts are deployed, and fetch-meta runs after invoke.

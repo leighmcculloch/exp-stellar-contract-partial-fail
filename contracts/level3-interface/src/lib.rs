@@ -3,5 +3,5 @@ use soroban_sdk::{contractclient, Env};
 
 #[contractclient(name = "Client")]
 pub trait Interface {
-    fn do_work(env: Env);
+    fn level3(env: Env);
 }
