@@ -6,16 +6,16 @@ A Soroban smart contract example demonstrating graceful error handling using the
 
 This project contains three contracts in a call chain:
 
-- **level1** - The top-level contract that calls level2 using `try_call_me()` to handle errors gracefully
+- **level1** - The top-level contract that calls level2 using `try_level2()` to handle errors gracefully
 - **level2** - A contract that calls level3, then always fails with a contract error
-- **level3** - A contract with a `do_work` function that succeeds
+- **level3** - A contract with a `level3` function that succeeds
 
 The call chain is: level1 -> level2 -> level3
 
 When level1 invokes level2:
-1. level2 calls level3's `do_work()` which succeeds
+1. level2 calls level3's `level3()` which succeeds
 2. level2 then returns an error
-3. level1 catches the error using `try_call_me()` without panicking
+3. level1 catches the error using `try_level2()` without panicking
 
 This demonstrates how to use the `try_` variant to catch errors from cross-contract calls.
 
